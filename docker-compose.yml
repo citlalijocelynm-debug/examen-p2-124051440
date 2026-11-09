@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  hadoop:
+    build: ./hadoop
+    container_name: hadoop_node
+    volumes:
+      - ./:/data/input:ro
+    networks:
+      - datamart-net
+
+  db:
+    image: postgres:15-alpine
+    container_name: postgres_db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - datamart-net
+
+  api:
+    build: ./api
+    container_name: api_node
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_HOST=db
+      - DB_NAME=${POSTGRES_DB}
+      - DB_USER=${POSTGRES_USER}
+      - DB_PASSWORD=${POSTGRES_PASSWORD}
+    depends_on:
+      - db
+    networks:
+      - datamart-net
+
+volumes:
+  pgdata:
+
+networks:
+  datamart-net:
+    driver: bridge
